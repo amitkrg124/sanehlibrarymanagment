@@ -49,9 +49,9 @@ export default function LoginPage() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.4 }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg mb-4"
+              className="inline-flex items-center justify-center w-20 h-20 rounded-full border border-slate-100 shadow-md mb-4 bg-white overflow-hidden"
             >
-              <BookOpen className="w-8 h-8 text-white" />
+              <img src="/logo.jpg" alt="Saneh Library Logo" className="w-full h-full object-cover" />
             </motion.div>
             <h1 className="text-2xl font-bold text-slate-900">{libraryName}</h1>
             <p className="text-slate-500 text-sm mt-1">Library Management System</p>

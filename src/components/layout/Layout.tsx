@@ -35,8 +35,8 @@ export default function Layout({ children }: LayoutProps) {
           
           {/* Left: Brand Identity */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="w-10 h-10 rounded-xl bg-[#8c3d19] flex items-center justify-center flex-shrink-0 shadow-md">
-              <BookOpen className="w-5 h-5 text-white" />
+            <Link to="/" className="w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden bg-white">
+              <img src="/logo.jpg" alt="Saneh Library Logo" className="w-full h-full object-cover" />
             </Link>
             <div>
               <div className="flex items-center gap-2">

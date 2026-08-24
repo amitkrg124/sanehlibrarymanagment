@@ -232,14 +232,45 @@ export const useAppStore = create<AppState>()(
               supabase.from('disabled_seats').select('*'),
             ]);
 
+            const loadedStudents = (students || []).map(mapStudentFromDb);
+            const loadedFees = (fees || []).map(mapFeeRecordFromDb);
+            const missingFees: FeeRecord[] = [];
+
+            loadedStudents.forEach((student) => {
+              if (student.status === 'active') {
+                const hasFee = loadedFees.some(f => f.studentId === student.id);
+                if (!hasFee) {
+                  const newFee: FeeRecord = {
+                    id: `fee-${generateId()}`,
+                    studentId: student.id,
+                    periodStart: student.admissionDate,
+                    periodEnd: format(addMonths(parseISO(student.admissionDate), 1), 'yyyy-MM-dd'),
+                    amount: student.monthlyFee,
+                    dueDate: student.admissionDate,
+                    status: 'due',
+                    createdAt: new Date().toISOString(),
+                  };
+                  missingFees.push(newFee);
+                }
+              }
+            });
+
+            const finalFees = [...loadedFees, ...missingFees];
+
             set({
-              students: (students || []).map(mapStudentFromDb),
+              students: loadedStudents,
               assignments: (assignments || []).map(mapAssignmentFromDb),
-              feeRecords: (fees || []).map(mapFeeRecordFromDb),
+              feeRecords: finalFees,
               attendance: (atts || []).map(mapAttendanceFromDb),
               enquiries: (enqs || []).map(mapEnquiryFromDb),
               disabledSeats: (disabled || []).map(d => d.seat_id),
             });
+
+            if (missingFees.length > 0) {
+              supabase.from('fee_records').insert(missingFees.map(mapFeeRecordToDb)).then(({ error }) => {
+                if (error) console.error('Error auto-syncing missing fee records:', error);
+              });
+            }
 
             // Sync settings too
             await useLibraryStore.getState().syncSettingsFromCloud();

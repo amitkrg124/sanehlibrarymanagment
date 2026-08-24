@@ -182,8 +182,8 @@ export default function FeesPage() {
                 {/* Amount + Status */}
                 <div className="text-right flex-shrink-0">
                   <p className="font-bold text-slate-900">₹{(fee?.amount ?? student.monthlyFee).toLocaleString('en-IN')}</p>
-                  <span className={`badge text-xs mt-0.5 ${fee ? feeStatusClass(fee.status) : 'badge-green'}`}>
-                    {fee ? (fee.status === 'overdue' ? 'Overdue' : fee.status === 'due' ? 'Due Today' : 'Upcoming') : 'Paid'}
+                  <span className={`badge text-xs mt-0.5 ${fee ? feeStatusClass(fee.status) : (lastPaid ? 'badge-green' : 'badge-slate')}`}>
+                    {fee ? (fee.status === 'overdue' ? 'Overdue' : fee.status === 'due' ? 'Due Today' : 'Upcoming') : (lastPaid ? 'Paid' : 'No Record')}
                   </span>
                 </div>
               </div>

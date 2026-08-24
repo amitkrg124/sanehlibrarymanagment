@@ -314,7 +314,10 @@ export const useAppStore = create<AppState>()(
         // Supabase insertion
         if (isSupabaseConfigured()) {
           supabase.from('students').insert(mapStudentToDb(newStudent)).then(({ error }) => {
-            if (error) console.error('Error inserting student:', error);
+            if (error) {
+              console.error('Error inserting student:', error);
+              toast.error(`Database Error: Failed to save student details. Check if columns exist. Details: ${error.message}`);
+            }
           });
           supabase.from('fee_records').insert(mapFeeRecordToDb(feeRecord)).then(({ error }) => {
             if (error) console.error('Error inserting fee record:', error);

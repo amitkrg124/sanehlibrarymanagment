@@ -13,7 +13,7 @@ export const isSupabaseConfigured = () => {
 // ─── Mapper Utilities (CamelCase <-> SnakeCase) ──────────────────────────────
 
 export function mapStudentToDb(s: Student) {
-  return {
+  const result: any = {
     id: s.id,
     name: s.name,
     phone: s.phone,
@@ -26,9 +26,10 @@ export function mapStudentToDb(s: Student) {
     current_seat_id: s.currentSeatId || null,
     status: s.status,
     notes: s.notes || null,
-    verification_type: s.verificationType || null,
-    verification_id: s.verificationId || null,
   };
+  if (s.verificationType) result.verification_type = s.verificationType;
+  if (s.verificationId) result.verification_id = s.verificationId;
+  return result;
 }
 
 export function mapStudentFromDb(s: any): Student {
@@ -109,15 +110,16 @@ export function mapFeeRecordFromDb(f: any): FeeRecord {
 }
 
 export function mapAttendanceToDb(a: AttendanceRecord) {
-  return {
+  const result: any = {
     id: a.id,
     student_id: a.studentId,
     date: a.date,
     shift: a.shift,
     status: a.status,
-    check_in_time: a.checkInTime || null,
-    check_out_time: a.checkOutTime || null,
   };
+  if (a.checkInTime) result.check_in_time = a.checkInTime;
+  if (a.checkOutTime) result.check_out_time = a.checkOutTime;
+  return result;
 }
 
 export function mapAttendanceFromDb(a: any): AttendanceRecord {

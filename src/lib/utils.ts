@@ -57,7 +57,11 @@ export function computeSeatAvailability(
     if (isBefore(dateObj, start)) return false;
     if (a.endDate) {
       const end = parseISO(a.endDate);
-      if (isAfter(dateObj, end)) return false;
+      if (a.status === 'transferred') {
+        if (isAfter(dateObj, end) || date.slice(0, 10) === a.endDate.slice(0, 10)) return false;
+      } else {
+        if (isAfter(dateObj, end)) return false;
+      }
     }
     return true;
   });

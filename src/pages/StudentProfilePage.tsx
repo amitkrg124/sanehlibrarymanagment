@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Phone, Mail, MapPin, Calendar, Armchair, Clock,
   IndianRupee, ClipboardList, History, ArrowRightLeft, UserX,
-  CheckCircle2, AlertCircle, Edit2, MessageSquare, Copy, Check
+  CheckCircle2, AlertCircle, Edit2, MessageSquare, Copy, Check, Trash2
 } from 'lucide-react';
 import { useAppStore, useLibraryStore } from '../store';
 import { formatShift, getShiftTiming, formatDisplayDate, todayStr, generateReminderMessage } from '../lib/utils';
@@ -12,6 +12,7 @@ import type { Shift } from '../types';
 import { format, parseISO, getDaysInMonth, startOfMonth } from 'date-fns';
 import ChangeSeatModal from '../components/students/ChangeSeatModal';
 import RecordPaymentModal from '../components/fees/RecordPaymentModal';
+import EditStudentModal from '../components/students/EditStudentModal';
 import toast from 'react-hot-toast';
 
 const TABS = ['Overview', 'Fees', 'Attendance', 'Seat History'] as const;
@@ -26,6 +27,7 @@ export default function StudentProfilePage() {
   );
   const [showChangeSeat, setShowChangeSeat] = useState(searchParams.get('action') === 'change-seat');
   const [showPayment, setShowPayment] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const [copiedReminder, setCopiedReminder] = useState(false);
   const [attendanceMonth, setAttendanceMonth] = useState(format(new Date(), 'yyyy-MM'));
 
@@ -36,6 +38,7 @@ export default function StudentProfilePage() {
   const allAssignments = useAppStore((s) => s.assignments);
   const deactivateStudent = useAppStore((s) => s.deactivateStudent);
   const updateStudent = useAppStore((s) => s.updateStudent);
+  const deleteStudent = useAppStore((s) => s.deleteStudent);
 
   const student = React.useMemo(() => students.find((s) => s.id === id), [students, id]);
 
@@ -115,9 +118,13 @@ export default function StudentProfilePage() {
               </span>
             </div>
             <div className="flex flex-wrap gap-3 mt-2">
-              {student.currentSeatId && (
+              {student.currentSeatId ? (
                 <span className="flex items-center gap-1.5 text-sm text-slate-600">
                   <Armchair size={14} /> Seat {student.currentSeatId}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-200">
+                  <AlertCircle size={14} /> No Seat Allotted
                 </span>
               )}
               <span className={`flex items-center gap-1.5 text-sm font-semibold ${
@@ -138,6 +145,9 @@ export default function StudentProfilePage() {
           </button>
           <button onClick={() => setShowPayment(true)} className="btn-secondary text-xs gap-1.5">
             <IndianRupee size={14} /> Record Payment
+          </button>
+          <button onClick={() => setShowEditProfile(true)} className="btn-secondary text-xs gap-1.5">
+            <Edit2 size={14} /> Edit Profile
           </button>
           {latestFee && (
             <button onClick={copyReminder} className="btn-secondary text-xs gap-1.5">
@@ -168,6 +178,18 @@ export default function StudentProfilePage() {
               <UserX size={14} className="rotate-180" /> Activate Profile
             </button>
           )}
+          <button
+            onClick={() => {
+              if (confirm(`Are you absolutely sure you want to delete ${student.name}? This will permanently delete all their records, fees, and attendance history.`)) {
+                deleteStudent(student.id);
+                toast.success(`${student.name} has been deleted.`);
+                navigate('/students');
+              }
+            }}
+            className="btn-secondary text-xs text-red-600 hover:bg-red-50 border-red-200 gap-1.5"
+          >
+            <Trash2 size={14} /> Delete Student
+          </button>
         </div>
       </motion.div>
 
@@ -207,6 +229,9 @@ export default function StudentProfilePage() {
                   {student.alternatePhone && <InfoRow icon={Phone} label="Alternate" value={student.alternatePhone} />}
                   {student.email && <InfoRow icon={Mail} label="Email" value={student.email} />}
                   {student.address && <InfoRow icon={MapPin} label="Address" value={student.address} />}
+                  {student.verificationType && student.verificationId && (
+                    <InfoRow icon={ClipboardList} label={`Verification (${student.verificationType})`} value={student.verificationId} />
+                  )}
                 </div>
               </div>
               <div className="card p-5">
@@ -214,7 +239,19 @@ export default function StudentProfilePage() {
                 <div className="space-y-3">
                   <InfoRow icon={Calendar} label="Admission Date" value={formatDisplayDate(student.admissionDate)} />
                   <InfoRow icon={Clock} label="Shift" value={`${formatShift(student.membershipType)} · ${getShiftTiming(student.membershipType, settings)}`} />
-                  {student.currentSeatId && <InfoRow icon={Armchair} label="Seat" value={student.currentSeatId} />}
+                  {student.currentSeatId ? (
+                    <InfoRow icon={Armchair} label="Seat" value={student.currentSeatId} />
+                  ) : (
+                    <div className="flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0 mt-0.5 border border-rose-100">
+                        <Armchair size={13} className="text-rose-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-400">Seat</p>
+                        <p className="text-sm font-bold text-rose-600 mt-0.5">Not Allotted (Reassign from header quick actions)</p>
+                      </div>
+                    </div>
+                  )}
                   <InfoRow icon={IndianRupee} label="Monthly Fee" value={`₹${student.monthlyFee.toLocaleString('en-IN')}`} />
                   {student.notes && <InfoRow icon={MessageSquare} label="Notes" value={student.notes} />}
                 </div>
@@ -423,6 +460,9 @@ export default function StudentProfilePage() {
         )}
         {showPayment && latestFee && (
           <RecordPaymentModal feeId={latestFee.id} studentName={student.name} onClose={() => setShowPayment(false)} />
+        )}
+        {showEditProfile && (
+          <EditStudentModal studentId={student.id} onClose={() => setShowEditProfile(false)} />
         )}
       </AnimatePresence>
     </div>

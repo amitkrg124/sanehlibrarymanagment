@@ -134,6 +134,7 @@ interface AppState {
   addStudent: (student: Omit<Student, 'id' | 'createdAt' | 'updatedAt'>) => Student;
   updateStudent: (id: string, data: Partial<Student>) => void;
   deactivateStudent: (id: string) => void;
+  deleteStudent: (id: string) => void;
 
   // ── Seat Assignments ──
   assignSeat: (studentId: string, seatId: string, shift: SeatAssignment['shift'], startDate: string) => void;
@@ -293,11 +294,25 @@ export const useAppStore = create<AppState>()(
       },
 
       updateStudent: (id, data) => {
-        set((state) => ({
-          students: state.students.map((s) =>
+        set((state) => {
+          const updatedStudents = state.students.map((s) =>
             s.id === id ? { ...s, ...data, updatedAt: new Date().toISOString() } : s
-          ),
-        }));
+          );
+          
+          let updatedAssignments = state.assignments;
+          if (data.membershipType) {
+            updatedAssignments = state.assignments.map((a) =>
+              a.studentId === id && a.status === 'active'
+                ? { ...a, shift: data.membershipType! }
+                : a
+            );
+          }
+          
+          return {
+            students: updatedStudents,
+            assignments: updatedAssignments,
+          };
+        });
 
         if (isSupabaseConfigured()) {
           const updated = get().students.find(s => s.id === id);
@@ -306,6 +321,41 @@ export const useAppStore = create<AppState>()(
               if (error) console.error('Error updating student:', error);
             });
           }
+          if (data.membershipType) {
+            const activeAsgn = get().assignments.find(a => a.studentId === id && a.status === 'active');
+            if (activeAsgn) {
+              supabase.from('assignments')
+                .update({ shift: data.membershipType })
+                .eq('id', activeAsgn.id)
+                .then(({ error }) => {
+                  if (error) console.error('Error updating assignment shift:', error);
+                });
+            }
+          }
+        }
+      },
+
+      deleteStudent: (id) => {
+        set((state) => ({
+          students: state.students.filter((s) => s.id !== id),
+          assignments: state.assignments.filter((a) => a.studentId !== id),
+          feeRecords: state.feeRecords.filter((f) => f.studentId !== id),
+          attendance: state.attendance.filter((a) => a.studentId !== id),
+        }));
+
+        if (isSupabaseConfigured()) {
+          supabase.from('students').delete().eq('id', id).then(({ error }) => {
+            if (error) console.error('Error deleting student:', error);
+          });
+          supabase.from('assignments').delete().eq('student_id', id).then(({ error }) => {
+            if (error) console.error('Error deleting student assignments:', error);
+          });
+          supabase.from('fee_records').delete().eq('student_id', id).then(({ error }) => {
+            if (error) console.error('Error deleting student fee records:', error);
+          });
+          supabase.from('attendance').delete().eq('student_id', id).then(({ error }) => {
+            if (error) console.error('Error deleting student attendance:', error);
+          });
         }
       },
 
@@ -518,21 +568,26 @@ export const useAppStore = create<AppState>()(
         let isUpsertRecord: AttendanceRecord;
 
         set((state) => {
+          const student = state.students.find((s) => s.id === studentId);
+          const targetShift = student?.membershipType === 'fullday' ? 'fullday' : shift;
+
           const existing = state.attendance.find(
-            (a) => a.studentId === studentId && a.date === date && a.shift === shift
+            (a) => a.studentId === studentId && a.date === date && a.shift === targetShift
           );
+
+          const liveTime = status === 'present' ? format(new Date(), 'hh:mm a') : undefined;
 
           if (existing) {
             const updated = state.attendance.map((a) =>
-              a.studentId === studentId && a.date === date && a.shift === shift
-                ? { ...a, status }
+              a.studentId === studentId && a.date === date && a.shift === targetShift
+                ? { ...a, status, checkInTime: liveTime }
                 : a
             );
-            isUpsertRecord = updated.find(a => a.studentId === studentId && a.date === date && a.shift === shift)!;
+            isUpsertRecord = updated.find(a => a.studentId === studentId && a.date === date && a.shift === targetShift)!;
             return { attendance: updated };
           }
 
-          isUpsertRecord = { id: generateId(), studentId, date, shift, status };
+          isUpsertRecord = { id: generateId(), studentId, date, shift: targetShift, status, checkInTime: liveTime };
           return {
             attendance: [...state.attendance, isUpsertRecord],
           };
@@ -561,15 +616,17 @@ export const useAppStore = create<AppState>()(
 
         const newRecords: AttendanceRecord[] = [];
         const updatedRecords = [...attendance];
+        const liveTime = format(new Date(), 'hh:mm a');
 
         activeStudents.forEach((s) => {
+          const targetShift = s.membershipType === 'fullday' ? 'fullday' : shift;
           const idx = updatedRecords.findIndex(
-            (a) => a.studentId === s.id && a.date === today && a.shift === shift
+            (a) => a.studentId === s.id && a.date === today && a.shift === targetShift
           );
           if (idx >= 0) {
-            updatedRecords[idx] = { ...updatedRecords[idx], status: 'present' };
+            updatedRecords[idx] = { ...updatedRecords[idx], status: 'present', checkInTime: liveTime };
           } else {
-            newRecords.push({ id: generateId(), studentId: s.id, date: today, shift: s.membershipType, status: 'present' });
+            newRecords.push({ id: generateId(), studentId: s.id, date: today, shift: targetShift, status: 'present', checkInTime: liveTime });
           }
         });
 
@@ -577,8 +634,7 @@ export const useAppStore = create<AppState>()(
         set({ attendance: finalAttendance });
 
         if (isSupabaseConfigured()) {
-          // Upsert all marked/modified attendance records for this date/shift
-          const recordsToUpsert = finalAttendance.filter(a => a.date === today && (a.shift === shift || a.status === 'present'));
+          const recordsToUpsert = finalAttendance.filter(a => a.date === today && a.status === 'present');
           supabase.from('attendance').upsert(recordsToUpsert.map(mapAttendanceToDb)).then(({ error }) => {
             if (error) console.error('Error batch upserting attendance:', error);
           });

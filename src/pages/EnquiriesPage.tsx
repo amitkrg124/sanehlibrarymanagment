@@ -198,16 +198,14 @@ export default function EnquiriesPage() {
               {/* Actions */}
               {enq.status !== 'converted' && enq.status !== 'not_interested' && (
                 <div className="flex gap-2 mt-3 pt-3 border-t border-slate-50 flex-wrap">
-                  {enq.status !== 'converted' && (
-                    <button
-                      onClick={() => {
-                        setConvertEnquiry({ shift: enq.requirement });
-                      }}
-                      className="btn-primary text-xs py-1.5 px-3 gap-1.5"
-                    >
-                      <ArrowRight size={13} /> Convert to Student
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setConvertEnquiry({ shift: enq.requirement });
+                    }}
+                    className="btn-primary text-xs py-1.5 px-3 gap-1.5"
+                  >
+                    <ArrowRight size={13} /> Convert to Student
+                  </button>
                   <button
                     onClick={() => {
                       updateEnquiryStatus(enq.id, NEXT_STATUS[enq.status]);

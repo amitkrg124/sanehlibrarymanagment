@@ -11,7 +11,7 @@ interface ChangeSeatModalProps {
 }
 
 export default function ChangeSeatModal({ studentId, onClose }: ChangeSeatModalProps) {
-  const student = useAppStore((s) => s.getStudentById(studentId));
+  const student = useAppStore((s) => s.students.find((std) => std.id === studentId));
   const students = useAppStore((s) => s.students);
   const assignments = useAppStore((s) => s.assignments);
   const disabledSeats = useAppStore((s) => s.disabledSeats);
@@ -31,7 +31,7 @@ export default function ChangeSeatModal({ studentId, onClose }: ChangeSeatModalP
     if (disabledSeats.includes(id)) return false;
     const avail = availabilityMap[id];
     if (!avail) return true;
-    return avail[student!.membershipType];
+    return student ? !!avail[student.membershipType as keyof typeof avail] : false;
   });
 
   const handleConfirm = () => {

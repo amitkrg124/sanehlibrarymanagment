@@ -21,6 +21,8 @@ const schema = z.object({
   monthlyFee: z.number().min(1, 'Enter fee amount'),
   seatId: z.string().min(1, 'Select a seat'),
   notes: z.string().optional(),
+  verificationType: z.string().optional(),
+  verificationId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -103,6 +105,8 @@ export default function AddStudentModal({ onClose, prefillSeat, prefillShift }: 
       currentSeatId: formData.seatId,
       status: 'active',
       notes: formData.notes,
+      verificationType: formData.verificationType || undefined,
+      verificationId: formData.verificationId || undefined,
     });
     assignSeat(newStudent.id, formData.seatId, formData.membershipType, formData.admissionDate);
     toast.success(`${formData.name} admitted successfully! Seat ${formData.seatId} assigned.`);
@@ -185,6 +189,27 @@ export default function AddStudentModal({ onClose, prefillSeat, prefillShift }: 
                     <div>
                       <label className="label">Email (Optional)</label>
                       <input {...register('email')} type="email" className="input" placeholder="email@example.com" />
+                    </div>
+                    <div>
+                      <label className="label">Address (Optional)</label>
+                      <textarea {...register('address')} className="input h-16 resize-none py-2" placeholder="Enter residential address" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="label">Verification Doc (Optional)</label>
+                        <select {...register('verificationType')} className="input">
+                          <option value="">Select Document</option>
+                          <option value="Aadhaar">Aadhaar Card</option>
+                          <option value="Voter ID">Voter ID</option>
+                          <option value="PAN Card">PAN Card</option>
+                          <option value="Driving License">Driving License</option>
+                          <option value="Other">Other ID</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">Document ID No. (Optional)</label>
+                        <input {...register('verificationId')} className="input" placeholder="e.g. 1234-5678-9012" />
+                      </div>
                     </div>
                   </div>
                 </div>

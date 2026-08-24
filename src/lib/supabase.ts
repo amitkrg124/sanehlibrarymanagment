@@ -26,6 +26,8 @@ export function mapStudentToDb(s: Student) {
     current_seat_id: s.currentSeatId || null,
     status: s.status,
     notes: s.notes || null,
+    verification_type: s.verificationType || null,
+    verification_id: s.verificationId || null,
   };
 }
 
@@ -43,6 +45,8 @@ export function mapStudentFromDb(s: any): Student {
     currentSeatId: s.current_seat_id || undefined,
     status: s.status,
     notes: s.notes || undefined,
+    verificationType: s.verification_type || undefined,
+    verificationId: s.verification_id || undefined,
     createdAt: s.created_at,
     updatedAt: s.updated_at,
   };
@@ -69,6 +73,7 @@ export function mapAssignmentFromDb(a: any): SeatAssignment {
     startDate: a.start_date,
     endDate: a.end_date || undefined,
     status: a.status,
+    createdAt: a.created_at || new Date().toISOString(),
   };
 }
 
@@ -110,6 +115,8 @@ export function mapAttendanceToDb(a: AttendanceRecord) {
     date: a.date,
     shift: a.shift,
     status: a.status,
+    check_in_time: a.checkInTime || null,
+    check_out_time: a.checkOutTime || null,
   };
 }
 
@@ -120,6 +127,8 @@ export function mapAttendanceFromDb(a: any): AttendanceRecord {
     date: a.date,
     shift: a.shift,
     status: a.status,
+    checkInTime: a.check_in_time || undefined,
+    checkOutTime: a.check_out_time || undefined,
   };
 }
 
@@ -179,7 +188,6 @@ export function mapSettingsFromDb(s: any): LibrarySettings {
     defaultEveningFee: Number(s.default_evening_fee),
     defaultFullDayFee: Number(s.default_full_day_fee),
     reminderDaysBefore: Number(s.reminder_days_before),
-    admin_password: s.admin_password, // wait, setting uses camelCase for settings? Let's check settings type
     adminPassword: s.admin_password,
   };
 }

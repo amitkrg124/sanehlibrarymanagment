@@ -163,7 +163,16 @@ export default function AttendancePage() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-900 truncate">{student.name}</p>
-                  <p className="text-xs text-slate-400">Seat {student.currentSeatId}</p>
+                  <p className="text-xs text-slate-400">
+                    Seat {student.currentSeatId}
+                    {status === 'present' && (() => {
+                      const record = attendance.find(
+                        (a) => a.studentId === student.id && a.date === date &&
+                          (a.shift === activeShift || a.shift === 'fullday')
+                      );
+                      return record?.checkInTime ? ` • In: ${record.checkInTime}` : '';
+                    })()}
+                  </p>
                 </div>
 
                 {/* Status toggle */}

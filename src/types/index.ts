@@ -33,6 +33,8 @@ export interface Student {
   status: StudentStatus;
   notes?: string;
   emergencyContact?: string;
+  verificationType?: string;
+  verificationId?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -42,6 +42,8 @@ export const MOCK_STUDENTS: Student[] = [
     currentSeatId: 'A3',
     status: 'active',
     notes: 'Preparing for UPSC',
+    verificationType: 'Aadhaar',
+    verificationId: '1234-5678-9012',
     createdAt: '2026-07-12T10:00:00Z',
     updatedAt: '2026-07-12T10:00:00Z',
   },
@@ -57,6 +59,8 @@ export const MOCK_STUDENTS: Student[] = [
     currentSeatId: 'A1',
     status: 'active',
     notes: 'CA student',
+    verificationType: 'Voter ID',
+    verificationId: 'VOT987654321',
     createdAt: '2026-07-15T11:00:00Z',
     updatedAt: '2026-07-15T11:00:00Z',
   },
@@ -69,6 +73,8 @@ export const MOCK_STUDENTS: Student[] = [
     monthlyFee: 2000,
     currentSeatId: 'B1',
     status: 'active',
+    verificationType: 'PAN Card',
+    verificationId: 'AMIPD1234F',
     createdAt: '2026-07-18T09:00:00Z',
     updatedAt: '2026-07-18T09:00:00Z',
   },
@@ -302,6 +308,7 @@ function makeAttendance(
       date,
       shift,
       status,
+      checkInTime: status === 'present' ? '09:30 AM' : undefined,
     });
   });
   return records;

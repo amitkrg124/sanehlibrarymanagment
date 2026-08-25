@@ -47,6 +47,14 @@
 }
 
 @layer components {
+  /* Modals */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-opacity;
+  }
+  .modal-content {
+    @apply relative w-full bg-white rounded-3xl shadow-2xl z-50 border border-slate-100 overflow-hidden;
+  }
+
   /* Cards */
   .card {
     @apply bg-white rounded-2xl border border-slate-100 shadow-card;

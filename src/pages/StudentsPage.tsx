@@ -8,9 +8,9 @@ import type { Shift, StudentStatus } from '../types';
 import AddStudentModal from '../components/students/AddStudentModal';
 
 const SHIFT_FILTERS = [
-  { value: 'all', label: 'All Shifts' },
-  { value: 'reserved', label: '?? Reserved' },
-  { value: 'unreserved', label: '? Unreserved' },
+  { value: 'all', label: 'All' },
+  { value: 'reserved', label: 'Reserved' },
+  { value: 'unreserved', label: 'Unreserved' },
   { value: 'afternoon', label: 'Afternoon' },
   { value: 'evening', label: 'Evening' },
   { value: 'fullday', label: 'Full Day' },
@@ -127,7 +127,7 @@ export default function StudentsPage() {
             ))}
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            {[{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }].map((f) => (
+            {[{ value: 'all', label: 'All Status' }, { value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }].map((f) => (
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value as StudentStatus | 'all')}

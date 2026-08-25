@@ -67,7 +67,7 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
       admissionDate: todayStr(),
       seatType: 'reserved',
       membershipType: prefillShift || 'afternoon',
-      planHours: '2 Hours / Flexible',
+      planHours: '2 Hours Plan',
       monthlyFee: defaultFee(prefillShift || 'afternoon', 'reserved'),
       seatId: prefillSeat || '',
     },
@@ -136,18 +136,20 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
     >
-      <div className="modal-backdrop" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
 
       <motion.div
-        initial={{ y: 40, scale: 0.98 }}
-        animate={{ y: 0, scale: 1 }}
-        exit={{ y: 40, scale: 0.98 }}
-        className="modal-content sm:max-w-xl max-h-[92vh] flex flex-col"
+        initial={{ y: 30, scale: 0.96, opacity: 0 }}
+        animate={{ y: 0, scale: 1, opacity: 1 }}
+        exit={{ y: 30, scale: 0.96, opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full sm:max-w-xl max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col z-10 my-auto overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
               {step === 'form' ? 'New Student Admission' : 'Review & Confirm Admission'}
@@ -156,13 +158,13 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
               {step === 'form' ? 'Fill student & membership details' : 'Verify all details before saving'}
             </p>
           </div>
-          <button onClick={onClose} className="btn-ghost p-2 rounded-xl text-slate-400">
+          <button onClick={onClose} className="btn-ghost p-2 rounded-xl text-slate-400 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 bg-white">
           <AnimatePresence mode="wait">
             {step === 'form' ? (
               <motion.form
@@ -248,14 +250,14 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
                       className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
                         watchedSeatType === 'reserved'
                           ? 'bg-brand-50 border-brand-600 text-brand-900 shadow-sm'
-                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                       }`}
                     >
                       <input
                         type="radio"
                         value="reserved"
                         {...register('seatType')}
-                        onChange={(e) => {
+                        onChange={() => {
                           setValue('seatType', 'reserved');
                           if (watchedShift === 'unreserved') setValue('membershipType', 'afternoon');
                           setValue('monthlyFee', defaultFee('afternoon', 'reserved'));
@@ -267,7 +269,7 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
                       </div>
                       <div>
                         <p className="text-xs font-bold">Reserved Seat</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">Fixed seat number & fixed batch timing</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">Fixed seat number & batch timing</p>
                       </div>
                     </label>
 
@@ -275,14 +277,14 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
                       className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
                         watchedSeatType === 'unreserved'
                           ? 'bg-amber-50 border-amber-500 text-amber-900 shadow-sm'
-                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                       }`}
                     >
                       <input
                         type="radio"
                         value="unreserved"
                         {...register('seatType')}
-                        onChange={(e) => {
+                        onChange={() => {
                           setValue('seatType', 'unreserved');
                           setValue('membershipType', 'unreserved');
                           setValue('seatId', '');
@@ -295,7 +297,7 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
                       </div>
                       <div>
                         <p className="text-xs font-bold">Unreserved / Floating</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">Flexible hours (2hr/4hr/floating, no fixed seat)</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">Flexible hours (2h/4h, floating seat)</p>
                       </div>
                     </label>
                   </div>
@@ -332,7 +334,7 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
                                     ? s === 'afternoon' ? 'bg-orange-50 border-orange-400 text-orange-700'
                                       : s === 'evening' ? 'bg-blue-50 border-blue-400 text-blue-700'
                                       : 'bg-purple-50 border-purple-400 text-purple-700'
-                                    : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                                 }`}
                               >
                                 <input
@@ -399,7 +401,7 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
                                 className={`flex flex-col items-center justify-center p-2.5 rounded-xl border-2 cursor-pointer text-center text-xs font-bold transition-all ${
                                   watch('planHours') === plan
                                     ? 'bg-amber-50 border-amber-500 text-amber-800'
-                                    : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                                 }`}
                               >
                                 <input
@@ -495,7 +497,7 @@ export default function AddStudentModal({ prefillSeat, prefillShift, onClose }: 
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-5 pt-3 border-t border-slate-100">
+        <div className="px-6 pb-5 pt-3 border-t border-slate-100 bg-white sticky bottom-0 z-10">
           {step === 'form' ? (
             <button type="submit" form="admission-form" className="btn-primary w-full justify-center py-3">
               Continue to Review

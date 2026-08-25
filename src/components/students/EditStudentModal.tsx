@@ -55,7 +55,7 @@ export default function EditStudentModal({ studentId, onClose }: EditStudentModa
       admissionDate: student?.admissionDate || '',
       seatType: student?.seatType || (student?.currentSeatId ? 'reserved' : (student?.membershipType === 'unreserved' ? 'unreserved' : 'reserved')),
       membershipType: student?.membershipType || 'afternoon',
-      planHours: student?.planHours || '2 Hours / Flexible',
+      planHours: student?.planHours || '2 Hours Plan',
       monthlyFee: student?.monthlyFee || 0,
       notes: student?.notes || '',
     },
@@ -103,18 +103,20 @@ export default function EditStudentModal({ studentId, onClose }: EditStudentModa
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
     >
-      <div className="modal-backdrop" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
 
       <motion.div
-        initial={{ y: 40, scale: 0.98 }}
-        animate={{ y: 0, scale: 1 }}
-        exit={{ y: 40, scale: 0.98 }}
-        className="modal-content sm:max-w-xl max-h-[92vh] flex flex-col"
+        initial={{ y: 30, scale: 0.96, opacity: 0 }}
+        animate={{ y: 0, scale: 1, opacity: 1 }}
+        exit={{ y: 30, scale: 0.96, opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full sm:max-w-xl max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 flex flex-col z-10 my-auto overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
               {step === 'form' ? 'Edit Student Details' : 'Confirm Updates'}
@@ -123,13 +125,13 @@ export default function EditStudentModal({ studentId, onClose }: EditStudentModa
               {step === 'form' ? 'Update personal, registration and membership information' : 'Review changes before saving'}
             </p>
           </div>
-          <button onClick={onClose} className="btn-ghost p-2 rounded-xl text-slate-400">
+          <button onClick={onClose} className="btn-ghost p-2 rounded-xl text-slate-400 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 bg-white">
           {step === 'form' ? (
             <form id="edit-student-form" onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
               {/* Personal Info */}
@@ -206,7 +208,7 @@ export default function EditStudentModal({ studentId, onClose }: EditStudentModa
                     className={`flex items-start gap-3 p-3 rounded-2xl border-2 cursor-pointer transition-all ${
                       watchedSeatType === 'reserved'
                         ? 'bg-brand-50 border-brand-600 text-brand-900 shadow-sm'
-                        : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                     }`}
                   >
                     <input
@@ -230,7 +232,7 @@ export default function EditStudentModal({ studentId, onClose }: EditStudentModa
                     className={`flex items-start gap-3 p-3 rounded-2xl border-2 cursor-pointer transition-all ${
                       watchedSeatType === 'unreserved'
                         ? 'bg-amber-50 border-amber-500 text-amber-900 shadow-sm'
-                        : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                     }`}
                   >
                     <input
@@ -282,7 +284,7 @@ export default function EditStudentModal({ studentId, onClose }: EditStudentModa
                                 ? s === 'afternoon' ? 'bg-orange-50 border-orange-400 text-orange-700'
                                   : s === 'evening' ? 'bg-blue-50 border-blue-400 text-blue-700'
                                   : 'bg-purple-50 border-purple-400 text-purple-700'
-                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                                : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                             }`}
                           >
                             <input
@@ -362,7 +364,7 @@ export default function EditStudentModal({ studentId, onClose }: EditStudentModa
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-5 pt-3 border-t border-slate-100 flex gap-2">
+        <div className="px-6 pb-5 pt-3 border-t border-slate-100 bg-white sticky bottom-0 z-10 flex gap-2">
           {step === 'form' ? (
             <button
               type="submit"

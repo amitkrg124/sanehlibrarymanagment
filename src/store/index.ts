@@ -439,9 +439,11 @@ export const useAppStore = create<AppState>()(
         }));
 
         if (isSupabaseConfigured()) {
-          supabase.from('assignments').insert(mapAssignmentToDb(newAssignment)).then(({ error }) => {
-            if (error) console.error('Error inserting assignment:', error);
-          });
+          setTimeout(() => {
+            supabase.from('assignments').insert(mapAssignmentToDb(newAssignment)).then(({ error }) => {
+              if (error) console.error('Error inserting assignment:', error);
+            });
+          }, 800);
           supabase.from('students').update({ current_seat_id: seatId }).eq('id', studentId).then(({ error }) => {
             if (error) console.error('Error assigning seat to student:', error);
           });

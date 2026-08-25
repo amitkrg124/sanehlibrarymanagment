@@ -52,15 +52,15 @@ export function computeSeatAvailability(
   // Filter only active assignments that cover this date
   const activeOnDate = assignments.filter(a => {
     if (a.status === 'ended') return false;
-    const start = parseISO(a.startDate);
-    const dateObj = parseISO(date);
-    if (isBefore(dateObj, start)) return false;
+    const startStr = a.startDate.slice(0, 10);
+    const dateStr = date.slice(0, 10);
+    if (dateStr < startStr) return false;
     if (a.endDate) {
-      const end = parseISO(a.endDate);
+      const endStr = a.endDate.slice(0, 10);
       if (a.status === 'transferred') {
-        if (isAfter(dateObj, end) || date.slice(0, 10) === a.endDate.slice(0, 10)) return false;
+        if (dateStr >= endStr) return false;
       } else {
-        if (isAfter(dateObj, end)) return false;
+        if (dateStr > endStr) return false;
       }
     }
     return true;

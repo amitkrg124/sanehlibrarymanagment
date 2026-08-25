@@ -114,7 +114,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-slate-400 text-xs mt-6">
-            Default password: <span className="font-mono text-slate-600">saneh123</span>
+            {/* Default password: <span className="font-mono text-slate-600">Demo</span> */}
           </p>
         </div>
 

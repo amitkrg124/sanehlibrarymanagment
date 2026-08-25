@@ -1,38 +1,49 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Plus, Phone, Armchair, Calendar, ChevronRight, UserX, Users } from 'lucide-react';
+import { Search, Plus, Phone, Armchair, Calendar, ChevronRight, Users, Sparkles, Hash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
 import { formatShift, formatDisplayDate } from '../lib/utils';
 import type { Shift, StudentStatus } from '../types';
 import AddStudentModal from '../components/students/AddStudentModal';
 
-const SHIFT_FILTERS: { value: Shift | 'all'; label: string }[] = [
+const SHIFT_FILTERS = [
   { value: 'all', label: 'All Shifts' },
+  { value: 'reserved', label: '?? Reserved' },
+  { value: 'unreserved', label: '? Unreserved' },
   { value: 'afternoon', label: 'Afternoon' },
   { value: 'evening', label: 'Evening' },
   { value: 'fullday', label: 'Full Day' },
-];
+] as const;
 
 export default function StudentsPage() {
   const navigate = useNavigate();
-  const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
-  const [shiftFilter, setShiftFilter] = useState<Shift | 'all'>('all');
+  const [shiftFilter, setShiftFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StudentStatus | 'all'>('all');
-  const [feeFilter, setFeeFilter] = useState<'all' | 'overdue' | 'due' | 'paid'>('all');
+  const [feeFilter, setFeeFilter] = useState<'all' | 'due' | 'overdue' | 'paid'>('all');
+  const [showAdd, setShowAdd] = useState(false);
 
   const students = useAppStore((s) => s.students);
   const feeRecords = useAppStore((s) => s.feeRecords);
-  const assignments = useAppStore((s) => s.assignments);
 
   const filtered = useMemo(() => {
     return students.filter((s) => {
       if (search) {
         const q = search.toLowerCase();
-        if (!s.name.toLowerCase().includes(q) && !s.phone.includes(q) && !s.currentSeatId?.toLowerCase().includes(q)) return false;
+        const matchesName = s.name.toLowerCase().includes(q);
+        const matchesPhone = s.phone.includes(q);
+        const matchesSeat = s.currentSeatId?.toLowerCase().includes(q);
+        const matchesRegNo = s.registrationNo?.toLowerCase().includes(q);
+        if (!matchesName && !matchesPhone && !matchesSeat && !matchesRegNo) return false;
       }
-      if (shiftFilter !== 'all' && s.membershipType !== shiftFilter) return false;
+      if (shiftFilter !== 'all') {
+        if (shiftFilter === 'reserved' && (s.seatType === 'unreserved' || s.membershipType === 'unreserved')) return false;
+        if (shiftFilter === 'unreserved' && s.seatType !== 'unreserved' && s.membershipType !== 'unreserved') return false;
+        if (shiftFilter === 'afternoon' && s.membershipType !== 'afternoon') return false;
+        if (shiftFilter === 'evening' && s.membershipType !== 'evening') return false;
+        if (shiftFilter === 'fullday' && s.membershipType !== 'fullday') return false;
+      }
       if (statusFilter !== 'all' && s.status !== statusFilter) return false;
       if (feeFilter !== 'all') {
         const latestFee = feeRecords
@@ -52,9 +63,12 @@ export default function StudentsPage() {
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
   };
 
-  const shiftBadge = (shift: Shift) => {
-    if (shift === 'afternoon') return 'badge-orange';
-    if (shift === 'evening') return 'badge-blue';
+  const shiftBadge = (student: typeof students[0]) => {
+    if (student.seatType === 'unreserved' || student.membershipType === 'unreserved') {
+      return 'bg-amber-100 text-amber-800 border-amber-200';
+    }
+    if (student.membershipType === 'afternoon') return 'badge-orange';
+    if (student.membershipType === 'evening') return 'badge-blue';
     return 'badge-purple';
   };
 
@@ -71,7 +85,9 @@ export default function StudentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">Students</h1>
-          <p className="page-subtitle">{students.filter((s) => s.status === 'active').length} active students</p>
+          <p className="page-subtitle">
+            {students.filter((s) => s.status === 'active').length} active students � {students.filter((s) => s.status === 'active' && (s.seatType === 'unreserved' || s.membershipType === 'unreserved')).length} unreserved
+          </p>
         </div>
         <button onClick={() => setShowAdd(true)} className="btn-primary">
           <Plus size={16} />
@@ -88,7 +104,7 @@ export default function StudentsPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, phone, or seat…"
+            placeholder="Search by name, phone, seat, or Reg No. (e.g. SAN-101)..."
             className="input pl-10"
           />
         </div>
@@ -102,7 +118,7 @@ export default function StudentsPage() {
                 onClick={() => setShiftFilter(f.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                   shiftFilter === f.value
-                    ? 'bg-brand-600 text-white border-brand-600'
+                    ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
                     : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -145,6 +161,8 @@ export default function StudentsPage() {
           <AnimatePresence>
             {filtered.map((student, i) => {
               const latestFee = getLatestFee(student.id);
+              const isUnreserved = student.seatType === 'unreserved' || student.membershipType === 'unreserved';
+
               return (
                 <motion.div
                   key={student.id}
@@ -157,7 +175,7 @@ export default function StudentsPage() {
                 >
                   {/* Avatar */}
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm ${
-                    student.status === 'active' ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'
+                    student.status === 'active' ? (isUnreserved ? 'bg-amber-100 text-amber-800' : 'bg-brand-100 text-brand-700') : 'bg-slate-100 text-slate-500'
                   }`}>
                     {student.name[0]}
                   </div>
@@ -166,6 +184,12 @@ export default function StudentsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-900 truncate">{student.name}</p>
+                      {student.registrationNo && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] font-mono font-bold text-slate-700">
+                          <Hash size={10} className="text-slate-400" />
+                          {student.registrationNo}
+                        </span>
+                      )}
                       {student.status === 'inactive' && (
                         <span className="badge-slate text-xs">Inactive</span>
                       )}
@@ -174,11 +198,15 @@ export default function StudentsPage() {
                       <span className="text-xs text-slate-400 flex items-center gap-1">
                         <Phone size={11} /> {student.phone}
                       </span>
-                      {student.currentSeatId && (
-                        <span className="text-xs text-slate-400 flex items-center gap-1">
-                          <Armchair size={11} /> {student.currentSeatId}
+                      {isUnreserved ? (
+                        <span className="text-xs text-amber-600 font-semibold flex items-center gap-1">
+                          <Sparkles size={11} /> {student.planHours || 'Unreserved'}
                         </span>
-                      )}
+                      ) : student.currentSeatId ? (
+                        <span className="text-xs text-slate-600 font-medium flex items-center gap-1">
+                          <Armchair size={11} className="text-slate-400" /> {student.currentSeatId}
+                        </span>
+                      ) : null}
                       <span className="text-xs text-slate-400 flex items-center gap-1">
                         <Calendar size={11} /> {formatDisplayDate(student.admissionDate)}
                       </span>
@@ -187,14 +215,14 @@ export default function StudentsPage() {
 
                   {/* Right side badges */}
                   <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                    <span className={`badge text-xs ${shiftBadge(student.membershipType)}`}>
-                      {formatShift(student.membershipType)}
+                    <span className={`badge text-xs border ${shiftBadge(student)}`}>
+                      {isUnreserved ? 'Unreserved' : formatShift(student.membershipType)}
                     </span>
                     {latestFee && (
                       <span className={`badge text-xs ${feeBadge(latestFee.status)}`}>
                         {latestFee.status === 'overdue' ? 'Overdue'
                           : latestFee.status === 'due' ? 'Due'
-                          : `₹${latestFee.amount.toLocaleString('en-IN')}`}
+                          : `?${latestFee.amount.toLocaleString('en-IN')}`}
                       </span>
                     )}
                   </div>

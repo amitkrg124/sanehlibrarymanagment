@@ -233,14 +233,16 @@ export function formatDisplayDate(dateStr: string): string {
 export function formatShift(shift: Shift): string {
   if (shift === 'afternoon') return 'Afternoon';
   if (shift === 'evening') return 'Evening';
+  if (shift === 'unreserved') return 'Unreserved (Floating)';
   return 'Full Day';
 }
 
 export function getShiftTiming(shift: Shift, settings?: { afternoonStart: string; afternoonEnd: string; eveningStart: string; eveningEnd: string }): string {
+  if (shift === 'unreserved') return 'Flexible / Floating Hours';
   const s = settings ?? { afternoonStart: '07:00', afternoonEnd: '14:00', eveningStart: '14:00', eveningEnd: '21:00' };
-  if (shift === 'afternoon') return `${formatTime(s.afternoonStart)} – ${formatTime(s.afternoonEnd)}`;
-  if (shift === 'evening') return `${formatTime(s.eveningStart)} – ${formatTime(s.eveningEnd)}`;
-  return `${formatTime(s.afternoonStart)} – ${formatTime(s.eveningEnd)}`;
+  if (shift === 'afternoon') return `${formatTime(s.afternoonStart)} � ${formatTime(s.afternoonEnd)}`;
+  if (shift === 'evening') return `${formatTime(s.eveningStart)} � ${formatTime(s.eveningEnd)}`;
+  return `${formatTime(s.afternoonStart)} � ${formatTime(s.eveningEnd)}`;
 }
 
 function formatTime(time: string): string {

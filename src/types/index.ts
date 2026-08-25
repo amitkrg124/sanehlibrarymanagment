@@ -1,6 +1,7 @@
-// ─── Enums ─────────────────────────────────────────────────────────────────
+// --- Enums -----------------------------------------------------------------
 
-export type Shift = 'afternoon' | 'evening' | 'fullday';
+export type Shift = 'afternoon' | 'evening' | 'fullday' | 'unreserved';
+export type SeatType = 'reserved' | 'unreserved';
 export type SeatStatus = 'available' | 'afternoon' | 'evening' | 'fullday' | 'disabled';
 export type StudentStatus = 'active' | 'inactive';
 export type FeeStatus = 'paid' | 'due' | 'overdue' | 'upcoming';
@@ -8,7 +9,7 @@ export type AttendanceStatus = 'present' | 'absent' | 'holiday' | 'unmarked';
 export type EnquiryStatus = 'new' | 'followup' | 'converted' | 'not_interested';
 export type PaymentMethod = 'cash' | 'upi' | 'bank_transfer' | 'other';
 
-// ─── Seat ──────────────────────────────────────────────────────────────────
+// --- Seat ------------------------------------------------------------------
 
 export interface Seat {
   id: string;           // e.g. "A1"
@@ -17,10 +18,12 @@ export interface Seat {
   isDisabled: boolean;
 }
 
-// ─── Student ───────────────────────────────────────────────────────────────
+// --- Student ---------------------------------------------------------------
 
 export interface Student {
   id: string;
+  registrationNo?: string;   // Manual Registration No. e.g. "SAN-101"
+  seatType?: SeatType;       // 'reserved' (default) or 'unreserved'
   name: string;
   phone: string;
   alternatePhone?: string;
@@ -28,6 +31,7 @@ export interface Student {
   address?: string;
   admissionDate: string;     // ISO date string
   membershipType: Shift;
+  planHours?: string;        // e.g. "2 Hours", "4 Hours", "Flexible" for unreserved
   monthlyFee: number;
   currentSeatId?: string;
   status: StudentStatus;
@@ -39,7 +43,7 @@ export interface Student {
   updatedAt: string;
 }
 
-// ─── Seat Assignment ───────────────────────────────────────────────────────
+// --- Seat Assignment -------------------------------------------------------
 
 export interface SeatAssignment {
   id: string;
@@ -52,7 +56,7 @@ export interface SeatAssignment {
   createdAt: string;
 }
 
-// ─── Fee Record ────────────────────────────────────────────────────────────
+// --- Fee Record ------------------------------------------------------------
 
 export interface FeeRecord {
   id: string;
@@ -68,7 +72,7 @@ export interface FeeRecord {
   createdAt: string;
 }
 
-// ─── Attendance ────────────────────────────────────────────────────────────
+// --- Attendance ------------------------------------------------------------
 
 export interface AttendanceRecord {
   id: string;
@@ -80,7 +84,7 @@ export interface AttendanceRecord {
   checkOutTime?: string;
 }
 
-// ─── Enquiry ───────────────────────────────────────────────────────────────
+// --- Enquiry ---------------------------------------------------------------
 
 export interface Enquiry {
   id: string;
@@ -93,7 +97,7 @@ export interface Enquiry {
   createdAt: string;
 }
 
-// ─── Settings ──────────────────────────────────────────────────────────────
+// --- Settings --------------------------------------------------------------
 
 export interface LibrarySettings {
   libraryName: string;
@@ -106,11 +110,12 @@ export interface LibrarySettings {
   defaultAfternoonFee: number;
   defaultEveningFee: number;
   defaultFullDayFee: number;
+  defaultUnreservedFee?: number;
   reminderDaysBefore: number;
   adminPassword: string;
 }
 
-// ─── Derived / Computed ────────────────────────────────────────────────────
+// --- Derived / Computed ----------------------------------------------------
 
 export interface SeatAvailability {
   seatId: string;

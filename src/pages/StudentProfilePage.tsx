@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Phone, Mail, MapPin, Calendar, Armchair, Clock,
-  IndianRupee, ClipboardList, History, ArrowRightLeft, UserX,
-  CheckCircle2, AlertCircle, Edit2, MessageSquare, Copy, Check, Trash2
+  IndianRupee, ClipboardList, ArrowRightLeft, UserX,
+  CheckCircle2, AlertCircle, Edit2, MessageSquare, Copy, Check, Trash2,
+  Sparkles, Hash, Layers
 } from 'lucide-react';
 import { useAppStore, useLibraryStore } from '../store';
 import { formatShift, getShiftTiming, formatDisplayDate, todayStr, generateReminderMessage } from '../lib/utils';
@@ -71,6 +72,8 @@ export default function StudentProfilePage() {
     );
   }
 
+  const isUnreserved = student.seatType === 'unreserved' || student.membershipType === 'unreserved';
+
   const presentCount = attendanceRecords.filter((a) => a.status === 'present').length;
   const absentCount = attendanceRecords.filter((a) => a.status === 'absent').length;
   const attendanceRate = attendanceRecords.length > 0
@@ -107,20 +110,37 @@ export default function StudentProfilePage() {
         className="card p-5"
       >
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-brand-100 flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl font-black text-brand-700">{student.name[0]}</span>
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 font-black text-2xl ${
+            isUnreserved ? 'bg-amber-100 text-amber-800' : 'bg-brand-100 text-brand-700'
+          }`}>
+            <span>{student.name[0]}</span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold text-slate-900">{student.name}</h1>
+              {student.registrationNo && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-800">
+                  <Hash size={11} className="text-slate-400" />
+                  {student.registrationNo}
+                </span>
+              )}
               <span className={`badge ${student.status === 'active' ? 'badge-green' : 'badge-slate'}`}>
                 {student.status === 'active' ? 'Active' : 'Inactive'}
               </span>
+              <span className={`badge text-xs ${
+                isUnreserved ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+              }`}>
+                {isUnreserved ? 'Unreserved / Floating' : 'Reserved Seat'}
+              </span>
             </div>
             <div className="flex flex-wrap gap-3 mt-2">
-              {student.currentSeatId ? (
-                <span className="flex items-center gap-1.5 text-sm text-slate-600">
-                  <Armchair size={14} /> Seat {student.currentSeatId}
+              {isUnreserved ? (
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                  <Sparkles size={14} className="text-amber-600" /> {student.planHours || 'Flexible Floating Seat'}
+                </span>
+              ) : student.currentSeatId ? (
+                <span className="flex items-center gap-1.5 text-sm text-slate-600 font-medium bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+                  <Armchair size={14} className="text-slate-500" /> Seat {student.currentSeatId}
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-200">
@@ -128,7 +148,8 @@ export default function StudentProfilePage() {
                 </span>
               )}
               <span className={`flex items-center gap-1.5 text-sm font-semibold ${
-                student.membershipType === 'afternoon' ? 'text-orange-700'
+                isUnreserved ? 'text-amber-700'
+                : student.membershipType === 'afternoon' ? 'text-orange-700'
                 : student.membershipType === 'evening' ? 'text-blue-700'
                 : 'text-purple-700'
               }`}>
@@ -141,7 +162,7 @@ export default function StudentProfilePage() {
         {/* Quick actions */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100 flex-wrap">
           <button onClick={() => setShowChangeSeat(true)} className="btn-secondary text-xs gap-1.5">
-            <ArrowRightLeft size={14} /> Change Seat
+            <ArrowRightLeft size={14} /> {isUnreserved ? 'Allot Fixed Seat' : 'Change Seat'}
           </button>
           <button onClick={() => setShowPayment(true)} className="btn-secondary text-xs gap-1.5">
             <IndianRupee size={14} /> Record Payment
@@ -219,12 +240,15 @@ export default function StudentProfilePage() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
         >
-          {/* ── Overview ── */}
+          {/* -- Overview -- */}
           {activeTab === 'Overview' && (
             <div className="space-y-4">
               <div className="card p-5">
-                <h3 className="section-heading">Contact Information</h3>
+                <h3 className="section-heading">Contact & Identification</h3>
                 <div className="space-y-3">
+                  {student.registrationNo && (
+                    <InfoRow icon={Hash} label="Registration Number" value={student.registrationNo} />
+                  )}
                   <InfoRow icon={Phone} label="Mobile" value={student.phone} />
                   {student.alternatePhone && <InfoRow icon={Phone} label="Alternate" value={student.alternatePhone} />}
                   {student.email && <InfoRow icon={Mail} label="Email" value={student.email} />}
@@ -235,12 +259,15 @@ export default function StudentProfilePage() {
                 </div>
               </div>
               <div className="card p-5">
-                <h3 className="section-heading">Membership Details</h3>
+                <h3 className="section-heading">Membership & Seat Category</h3>
                 <div className="space-y-3">
+                  <InfoRow icon={Layers} label="Seat Category" value={isUnreserved ? 'Unreserved (Floating / Flexible Seat)' : 'Reserved (Fixed Seat Allotment)'} />
                   <InfoRow icon={Calendar} label="Admission Date" value={formatDisplayDate(student.admissionDate)} />
-                  <InfoRow icon={Clock} label="Shift" value={`${formatShift(student.membershipType)} · ${getShiftTiming(student.membershipType, settings)}`} />
-                  {student.currentSeatId ? (
-                    <InfoRow icon={Armchair} label="Seat" value={student.currentSeatId} />
+                  <InfoRow icon={Clock} label="Shift / Timing" value={`${formatShift(student.membershipType)} � ${getShiftTiming(student.membershipType, settings)}`} />
+                  {isUnreserved ? (
+                    <InfoRow icon={Sparkles} label="Seat Plan" value={student.planHours || 'Flexible (Sit on any free desk on arrival)'} />
+                  ) : student.currentSeatId ? (
+                    <InfoRow icon={Armchair} label="Fixed Seat Number" value={student.currentSeatId} />
                   ) : (
                     <div className="flex items-start gap-3">
                       <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0 mt-0.5 border border-rose-100">
@@ -248,69 +275,48 @@ export default function StudentProfilePage() {
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-slate-400">Seat</p>
-                        <p className="text-sm font-bold text-rose-600 mt-0.5">Not Allotted (Reassign from header quick actions)</p>
+                        <p className="text-sm font-bold text-rose-600 mt-0.5">Not Allotted (Allot from quick actions)</p>
                       </div>
                     </div>
                   )}
-                  <InfoRow icon={IndianRupee} label="Monthly Fee" value={`₹${student.monthlyFee.toLocaleString('en-IN')}`} />
+                  <InfoRow icon={IndianRupee} label="Monthly Fee" value={`?${student.monthlyFee.toLocaleString('en-IN')}`} />
                   {student.notes && <InfoRow icon={MessageSquare} label="Notes" value={student.notes} />}
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── Fees ── */}
+          {/* -- Fees -- */}
           {activeTab === 'Fees' && (
-            <div className="space-y-3">
-              {/* Summary */}
-              {latestFee && (
-                <div className={`card p-4 border-2 ${
-                  latestFee.status === 'overdue' ? 'border-red-200 bg-red-50/50'
-                  : latestFee.status === 'due' ? 'border-orange-200 bg-orange-50/50'
-                  : 'border-blue-200 bg-blue-50/50'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">Current Due</p>
-                      <p className="text-2xl font-black text-slate-900 mt-0.5">₹{latestFee.amount.toLocaleString('en-IN')}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Due: {formatDisplayDate(latestFee.dueDate)}</p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <span className={`badge ${latestFee.status === 'overdue' ? 'badge-red' : latestFee.status === 'due' ? 'badge-orange' : 'badge-blue'}`}>
-                        {latestFee.status === 'overdue' ? 'Overdue' : latestFee.status === 'due' ? 'Due Today' : 'Upcoming'}
-                      </span>
-                      <button onClick={() => setShowPayment(true)} className="btn-primary text-xs py-1.5 px-3 justify-center">
-                        Mark Paid
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* History */}
+            <div className="space-y-4">
               <div className="card p-5">
-                <h3 className="section-heading">Payment History</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="section-heading mb-0">Fee History</h3>
+                  <button onClick={() => setShowPayment(true)} className="btn-primary text-xs gap-1.5">
+                    <IndianRupee size={14} /> Record Payment
+                  </button>
+                </div>
                 {feeRecords.length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-4">No fee records yet</p>
+                  <p className="text-sm text-slate-400 text-center py-6">No fee records found</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {feeRecords.map((fee) => (
-                      <div key={fee.id} className="flex items-start justify-between gap-3 py-3 border-b border-slate-50 last:border-0">
+                      <div
+                        key={fee.id}
+                        className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 hover:border-slate-200 transition-all bg-slate-50/50"
+                      >
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">
-                            {formatDisplayDate(fee.periodStart)} – {formatDisplayDate(fee.periodEnd)}
+                          <p className="text-xs font-semibold text-slate-800">
+                            {formatDisplayDate(fee.periodStart)} � {formatDisplayDate(fee.periodEnd)}
                           </p>
-                          {fee.paidDate && (
-                            <p className="text-xs text-slate-400 mt-0.5">
-                              Paid on {formatDisplayDate(fee.paidDate)} · {fee.paymentMethod || 'Cash'}
-                            </p>
-                          )}
-                          {!fee.paidDate && (
-                            <p className="text-xs text-slate-400 mt-0.5">Due: {formatDisplayDate(fee.dueDate)}</p>
-                          )}
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Due: {formatDisplayDate(fee.dueDate)}
+                            {fee.paidDate ? ` � Paid on ${formatDisplayDate(fee.paidDate)}` : ''}
+                            {fee.paymentMethod ? ` via ${fee.paymentMethod.toUpperCase()}` : ''}
+                          </p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-bold text-slate-900">₹{fee.amount.toLocaleString('en-IN')}</p>
+                          <p className="text-sm font-bold text-slate-900">?{fee.amount.toLocaleString('en-IN')}</p>
                           <span className={`badge text-xs mt-1 ${
                             fee.status === 'paid' ? 'badge-green'
                             : fee.status === 'overdue' ? 'badge-red'
@@ -328,7 +334,7 @@ export default function StudentProfilePage() {
             </div>
           )}
 
-          {/* ── Attendance ── */}
+          {/* -- Attendance -- */}
           {activeTab === 'Attendance' && (
             <div className="space-y-4">
               {/* Summary */}
@@ -402,17 +408,29 @@ export default function StudentProfilePage() {
             </div>
           )}
 
-          {/* ── Seat History ── */}
+          {/* -- Seat History -- */}
           {activeTab === 'Seat History' && (
             <div className="card p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="section-heading mb-0">Seat History</h3>
+                <h3 className="section-heading mb-0">Seat Allotment History</h3>
                 <button onClick={() => setShowChangeSeat(true)} className="btn-secondary text-xs gap-1.5">
-                  <ArrowRightLeft size={14} /> Change Seat
+                  <ArrowRightLeft size={14} /> {isUnreserved ? 'Allot Fixed Seat' : 'Change Seat'}
                 </button>
               </div>
               {assignmentHistory.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-6">No seat history yet</p>
+                <div className="py-8 text-center">
+                  {isUnreserved ? (
+                    <div className="space-y-2">
+                      <Sparkles className="w-8 h-8 text-amber-500 mx-auto" />
+                      <p className="font-bold text-slate-800">Unreserved Student</p>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        This student is registered for flexible floating hours and does not have a permanently reserved seat.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 text-center py-6">No seat history records yet</p>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-3 relative">
                   <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-slate-100" />
@@ -427,6 +445,7 @@ export default function StudentProfilePage() {
                           <span className={`badge text-xs ${
                             asgn.shift === 'afternoon' ? 'badge-orange'
                             : asgn.shift === 'evening' ? 'badge-blue'
+                            : asgn.shift === 'unreserved' ? 'bg-amber-100 text-amber-800'
                             : 'badge-purple'
                           }`}>
                             {formatShift(asgn.shift)}
@@ -435,7 +454,7 @@ export default function StudentProfilePage() {
                         </div>
                         <p className="text-xs text-slate-400 mt-0.5">
                           From {formatDisplayDate(asgn.startDate)}
-                          {asgn.endDate ? ` → ${formatDisplayDate(asgn.endDate)}` : ' · Ongoing'}
+                          {asgn.endDate ? ` ? ${formatDisplayDate(asgn.endDate)}` : ' � Ongoing'}
                         </p>
                         {asgn.status === 'transferred' && (
                           <p className="text-xs text-slate-400">Seat transferred</p>

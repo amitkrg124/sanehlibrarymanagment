@@ -10,7 +10,7 @@ export const isSupabaseConfigured = () => {
   return supabaseUrl && supabaseAnonKey && !supabaseUrl.startsWith('YOUR_');
 };
 
-// ─── Mapper Utilities (CamelCase <-> SnakeCase) ──────────────────────────────
+// --- Mapper Utilities (CamelCase <-> SnakeCase) ------------------------------
 
 export function mapStudentToDb(s: Student) {
   const result: any = {
@@ -29,12 +29,31 @@ export function mapStudentToDb(s: Student) {
   };
   if (s.verificationType) result.verification_type = s.verificationType;
   if (s.verificationId) result.verification_id = s.verificationId;
+  if (s.registrationNo) result.registration_no = s.registrationNo;
+  if (s.seatType) result.seat_type = s.seatType;
+  if (s.planHours) result.plan_hours = s.planHours;
   return result;
 }
 
 export function mapStudentFromDb(s: any): Student {
+  // Extract registrationNo from column or notes fallback if available
+  let regNo = s.registration_no || undefined;
+  let seatType = s.seat_type || (s.current_seat_id ? 'reserved' : (s.membership_type === 'unreserved' ? 'unreserved' : 'reserved'));
+  let planHours = s.plan_hours || undefined;
+
+  if (!regNo && s.notes && s.notes.includes('[RegNo:')) {
+    const match = s.notes.match(/\[RegNo:\s*([^\]]+)\]/);
+    if (match) regNo = match[1].trim();
+  }
+  if (!s.seat_type && s.notes && s.notes.includes('[SeatType: Unreserved')) {
+    seatType = 'unreserved';
+  }
+
   return {
     id: s.id,
+    registrationNo: regNo,
+    seatType: seatType as 'reserved' | 'unreserved',
+    planHours: planHours,
     name: s.name,
     phone: s.phone,
     alternatePhone: s.alternate_phone || undefined,

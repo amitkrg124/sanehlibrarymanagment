@@ -630,7 +630,7 @@ export const useAppStore = create<AppState>()(
 
         set((state) => {
           const student = state.students.find((s) => s.id === studentId);
-          const targetShift = student?.membershipType === 'fullday' ? 'fullday' : shift;
+          const targetShift = (student?.seatType === 'unreserved' || student?.membershipType === 'unreserved') ? 'unreserved' : (student?.membershipType === 'fullday' ? 'fullday' : shift);
 
           const existing = state.attendance.find(
             (a) => a.studentId === studentId && a.date === date && a.shift === targetShift
@@ -666,6 +666,9 @@ export const useAppStore = create<AppState>()(
         const today = date;
         const activeStudents = students.filter((s) => {
           if (s.status !== 'active') return false;
+          if (shift === 'unreserved') {
+            return s.seatType === 'unreserved' || s.membershipType === 'unreserved';
+          }
           const asgns = assignments.filter(
             (a) => a.studentId === s.id && a.status === 'active' && 
             (a.shift === shift || (shift === 'fullday' && a.shift === 'fullday') ||

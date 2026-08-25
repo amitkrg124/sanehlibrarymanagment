@@ -232,16 +232,18 @@ export const useAppStore = create<AppState>()(
               supabase.from('disabled_seats').select('*'),
             ]);
 
-            const loadedStudents = (students || []).map(mapStudentFromDb);
+                        const loadedStudents = (students || []).map(mapStudentFromDb);
+            const loadedAssignments = (assignments || []).map(mapAssignmentFromDb);
             const loadedFees = (fees || []).map(mapFeeRecordFromDb);
-            const missingFees: FeeRecord[] = [];
+            const missingFees = [];
+            const missingAssignments = [];
 
             loadedStudents.forEach((student) => {
               if (student.status === 'active') {
                 const hasFee = loadedFees.some(f => f.studentId === student.id);
                 if (!hasFee) {
-                  const newFee: FeeRecord = {
-                    id: `fee-${generateId()}`,
+                  const newFee = {
+                    id: 'fee-' + generateId(),
                     studentId: student.id,
                     periodStart: student.admissionDate,
                     periodEnd: format(addMonths(parseISO(student.admissionDate), 1), 'yyyy-MM-dd'),
@@ -252,14 +254,31 @@ export const useAppStore = create<AppState>()(
                   };
                   missingFees.push(newFee);
                 }
+
+                if (student.currentSeatId) {
+                  const hasAssignment = loadedAssignments.some(a => a.studentId === student.id && a.seatId === student.currentSeatId && a.status === 'active');
+                  if (!hasAssignment) {
+                    const repairedAssignment = {
+                      id: 'asgn-repair-' + generateId(),
+                      studentId: student.id,
+                      seatId: student.currentSeatId,
+                      shift: student.membershipType,
+                      startDate: student.admissionDate,
+                      status: 'active',
+                      createdAt: new Date().toISOString()
+                    };
+                    missingAssignments.push(repairedAssignment);
+                  }
+                }
               }
             });
 
             const finalFees = [...loadedFees, ...missingFees];
+            const finalAssignments = [...loadedAssignments, ...missingAssignments];
 
             set({
               students: loadedStudents,
-              assignments: (assignments || []).map(mapAssignmentFromDb),
+              assignments: finalAssignments,
               feeRecords: finalFees,
               attendance: (atts || []).map(mapAttendanceFromDb),
               enquiries: (enqs || []).map(mapEnquiryFromDb),
@@ -269,6 +288,12 @@ export const useAppStore = create<AppState>()(
             if (missingFees.length > 0) {
               supabase.from('fee_records').insert(missingFees.map(mapFeeRecordToDb)).then(({ error }) => {
                 if (error) console.error('Error auto-syncing missing fee records:', error);
+              });
+            }
+
+            if (missingAssignments.length > 0) {
+              supabase.from('assignments').insert(missingAssignments.map(mapAssignmentToDb)).then(({ error }) => {
+                if (error) console.error('Error auto-syncing missing assignments:', error);
               });
             }
 
